@@ -61,7 +61,7 @@ This executes in sequence:
 - Evaluation: Information Coefficient (Spearman rank correlation)
 
 ### Random Forest
-- Trees: 100 estimators
+- Trees: 500 estimators
 - Depth: 3 (prevents overfitting)
 - Min samples per leaf: 20
 - Strategy: Long top 5 / Short bottom 5 stocks by predicted return

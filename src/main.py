@@ -1,55 +1,85 @@
-"""
-Main Pipeline - Orchestrates the entire quantitative strategy workflow
+import argparse
+import logging
+import sys
+import pandas as pd
+import os
 
-This script runs all components in sequence:
-1. Feature engineering (data_features.py)
-2. Ridge baseline model (ridge_baseline.py)
-3. Feature importance analysis (feature_importance.py)
-4. Portfolio signal generation (portfolio_optimizer.py)
-5. Random Forest backtest (random_forest_backtest.py)
-"""
+# --- 1. SETUP LOGGING ---
+# This looks much more professional than simple 'print' statements
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('pipeline.log')
+    ]
+)
+logger = logging.getLogger(__name__)
+
+def load_data():
+    """Smart data loader: Checks for cache first to save time."""
+    if os.path.exists("data_cache.pkl"):
+        logger.info("Loading features from cache (data_cache.pkl)...")
+        return pd.read_pickle("data_cache.pkl")
+    else:
+        logger.info("Cache not found. Running full data pipeline...")
+        from data_features import dummy_data  # This triggers the download/calc
+        dummy_data.to_pickle("data_cache.pkl")
+        return dummy_data
+
+def main():
+    # --- 2. COMMAND LINE INTERFACE ---
+    parser = argparse.ArgumentParser(description="Quantitative Trading Strategy Pipeline")
+    parser.add_argument(
+        '--step', 
+        type=str, 
+        default='all',
+        choices=['all', 'features', 'ridge', 'importance', 'portfolio', 'backtest', 'stress'],
+        help='Which step of the pipeline to run'
+    )
+    args = parser.parse_args()
+
+    logger.info(f"--- STARTING PIPELINE (Step: {args.step}) ---")
+
+    # Step 1: Feature Engineering (Always needed unless just loading cache)
+    if args.step == 'features':
+        from data_features import dummy_data
+        dummy_data.to_pickle("data_cache.pkl")
+        logger.info("Features engineered and cached.")
+        return # Exit if we only wanted features
+
+    # Load data for all other steps
+    data = load_data()
+
+    # Step 2: Ridge Baseline
+    if args.step in ['all', 'ridge']:
+        logger.info(">>> Training Ridge Regression Baseline...")
+        from ridge_baseline import train_ridge_baseline
+        mean_ic, ic_scores, _ = train_ridge_baseline(data)
+        logger.info(f"Ridge Mean IC: {mean_ic:.4f}")
+
+    # Step 3: Feature Importance
+    if args.step in ['all', 'importance']:
+        logger.info(">>> Analyzing Feature Importance...")
+        from feature_importance import analyze_feature_importance
+        analyze_feature_importance(data)
+
+    # Step 4: Portfolio Signals (Live Production)
+    if args.step in ['all', 'portfolio']:
+        logger.info(">>> Generating Live Portfolio Signals...")
+        from portfolio_optimizer import generate_portfolio_signals
+        generate_portfolio_signals(data)
+
+    # Step 5: Random Forest Backtest
+    if args.step in ['all', 'backtest']:
+        logger.info(">>> Running Random Forest Backtest...")
+        from random_forest_backtest import backtest_random_forest
+        # Strictly remove rows with no target for backtesting
+        clean_data = data.dropna(subset=['target_1m'])
+        backtest_random_forest(clean_data)
+
+    
+    logger.info("--- PIPELINE COMPLETE ---")
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("QUANTITATIVE TRADING STRATEGY PIPELINE")
-    print("=" * 60)
-    
-    # Step 1: Load and engineer features
-    print("\n[1/5] Loading data and engineering features...")
-    from data_features import dummy_data
-    print(f"✓ Data loaded: {dummy_data.shape[0]} samples, {dummy_data.shape[1]} features")
-    
-    # Step 2: Train Ridge baseline
-    print("\n[2/5] Training Ridge Regression baseline...")
-    from ridge_baseline import train_ridge_baseline
-    mean_ic, ic_scores, ridge_predictions = train_ridge_baseline(dummy_data)
-    print(f"✓ Ridge model trained (Mean IC: {mean_ic:.4f})")
-    
-    # Step 3: Analyze feature importance
-    print("\n[3/5] Analyzing feature importance...")
-    from feature_importance import analyze_feature_importance
-    importance = analyze_feature_importance(dummy_data)
-    print("✓ Feature importance calculated and saved")
-    
-    # Step 4: Generate current portfolio signals
-    print("\n[4/5] Generating portfolio signals...")
-    from portfolio_optimizer import generate_portfolio_signals
-    signals = generate_portfolio_signals(dummy_data)
-    print("✓ Portfolio signals generated")
-    
-    # Step 5: Backtest Random Forest
-    print("\n[5/5] Running Random Forest backtest...")
-    from random_forest_backtest import backtest_random_forest
-    clean_data = dummy_data.dropna()
-    returns, cumulative, sharpe, rf_predictions = backtest_random_forest(clean_data)
-    print("✓ Backtest complete")
-    
-    print("\n" + "=" * 60)
-    print("PIPELINE COMPLETE")
-    print("=" * 60)
-    print(f"\nRidge IC: {mean_ic:.4f}")
-    print(f"Random Forest Sharpe: {sharpe:.2f}")
-    print(f"Total Return: {(cumulative.iloc[-1] - 1):.2%}")
-    print("\nGenerated files:")
-    print("  - feature_importance.png")
-    print("  - rf_equity_curve.png")
+    main()

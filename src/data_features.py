@@ -8,6 +8,18 @@ import pandas_datareader.data as web
 from talib import BBANDS, RSI, MACD
 from sklearn.impute import SimpleImputer
 from datetime import datetime
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('pipeline.log')
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # --- 1. CONFIGURATION (UPDATED FOR LIVE) ---
 ticker_list = [
@@ -17,22 +29,23 @@ ticker_list = [
     'AMZN', 'TSLA', 'HD', 'MCD', 
     'WMT', 'COST', 'PG', 'KO',
     'XOM', 'CVX', 'COP',
-    'CAT', 'BA', 'UNP'
+    'CAT', 'BA', 'UNP',
+#     "SOFI", "DAL", "XRPC", "XLV", "TGRT", "RACE"
 ]
 
 # DYNAMIC DATE: Fetch data up to today
 start_date = "2000-01-01"
 end_date = datetime.today().strftime('%Y-%m-%d') 
 
-print(f"--- RUNNING DATA PIPELINE (END DATE: {end_date}) ---")
+logger.info(f"--- RUNNING DATA PIPELINE (END DATE: {end_date}) ---")
 
 # --- 2. DOWNLOAD & CALCULATE INDICATORS ---
-print("Downloading price data...")
+logger.info("Downloading price data...")
 raw_data = yf.download(ticker_list, start=start_date, end=end_date, auto_adjust=False)
 
 daily_indicators = pd.DataFrame(index=raw_data.index)
 
-print("Calculating Technical Indicators...")
+logger.info("Calculating Technical Indicators...")
 all_indicators = []
 for ticker in ticker_list:
     try:
@@ -56,7 +69,7 @@ for ticker in ticker_list:
         }, index=close_price.index)
         all_indicators.append(indicators)
     except Exception as e:
-        # print(f"Error calculating indicators for {ticker}: {e}")
+        # logger.info(f"Error calculating indicators for {ticker}: {e}")
         pass
 
 daily_indicators = pd.concat(all_indicators, axis=1)
@@ -95,15 +108,15 @@ data = data.join(stacked_indicators)
 
 # --- 5. FAMA-FRENCH FACTORS (FIXED) ---
 try:
-    print("Fetching Fama-French Factors...")
+    logger.info("Fetching Fama-French Factors...")
     # Fetch Data
     ff_dict = web.DataReader('F-F_Research_Data_5_Factors_2x3', 'famafrench', start='2000')
     factor_data = ff_dict[0].drop('RF', axis=1)
     
-    # 1. FIX: Convert PeriodIndex to Timestamp immediately
+    # Convert PeriodIndex to Timestamp immediately
     factor_data.index = factor_data.index.to_timestamp()
     
-    # 2. Resample to Month End to match your stock data
+    # Resample to Month End
     factor_data = factor_data.resample('ME').last().div(100)
     factor_data.index.name = 'date'
     
@@ -113,7 +126,7 @@ try:
     
     # 4. Calculate Rolling Betas (Exposure to factors)
     # This tells us: "Is AAPL moving like a Value stock or a Growth stock right now?"
-    print("Calculating Rolling Betas...")
+    logger.info("Calculating Rolling Betas...")
     T = 24
     
     def calculate_betas(x):
@@ -138,10 +151,10 @@ try:
     # Join Betas back to main data
     data = data.join(betas.groupby(level='ticker').shift()) # Shift because Beta is known at t-1
 
-    print("Fama-French Factors successfully added.")
+    logger.info("Fama-French Factors successfully added.")
 
 except Exception as e:
-    print(f"Warning: Fama-French factors skipped ({e}). Using technicals only.")
+    logger.info(f"Warning: Fama-French factors skipped ({e}). Using technicals only.")
 
 # --- 6. FEATURE ENGINEERING ---
 for lag in [2,3,6,9,12]:

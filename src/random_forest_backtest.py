@@ -4,6 +4,18 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 from ml_utils import PurgedKFold
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('pipeline.log')
+    ]
+)
+logger = logging.getLogger(__name__)
 
 def backtest_random_forest(clean_data, long_top_n=5, short_top_n=5):
     """
@@ -30,10 +42,10 @@ def backtest_random_forest(clean_data, long_top_n=5, short_top_n=5):
     cv = PurgedKFold(n_splits=5, pct_embargo=0.01)
     predictions = []
 
-    print("Running Random Forest Simulation (This may take a minute)...")
+    logger.info("Running Random Forest Simulation (This may take a minute)...")
 
     for fold, (train_idx, test_idx) in enumerate(cv.split(clean_data), 1):
-        print(f"  Processing Fold {fold}...")
+        logger.info(f"  Processing Fold {fold}...")
         
         # Split
         X_train, y_train = X.iloc[train_idx], y.iloc[train_idx]
@@ -86,11 +98,11 @@ def backtest_random_forest(clean_data, long_top_n=5, short_top_n=5):
     cumulative_return = (1 + portfolio_returns).cumprod()
     sharpe_ratio = (portfolio_returns.mean() / portfolio_returns.std()) * np.sqrt(12)
 
-    print("\n--- RANDOM FOREST RESULTS ---")
-    print(f"Annualized Sharpe Ratio: {sharpe_ratio:.2f}")
-    print(f"Total Return: {(cumulative_return.iloc[-1] - 1):.2%}")
-    print(f"Best Month: {portfolio_returns.max():.2%}")
-    print(f"Worst Month: {portfolio_returns.min():.2%}")
+    logger.info("\n--- RANDOM FOREST RESULTS ---")
+    logger.info(f"Annualized Sharpe Ratio: {sharpe_ratio:.2f}")
+    logger.info(f"Total Return: {(cumulative_return.iloc[-1] - 1):.2%}")
+    logger.info(f"Best Month: {portfolio_returns.max():.2%}")
+    logger.info(f"Worst Month: {portfolio_returns.min():.2%}")
 
     # Plot
     plt.figure(figsize=(12, 6))
@@ -100,7 +112,7 @@ def backtest_random_forest(clean_data, long_top_n=5, short_top_n=5):
     plt.tight_layout()
     plt.savefig('rf_equity_curve.png')
     plt.show()
-    print("Saved chart to rf_equity_curve.png")
+    logger.info("Saved chart to rf_equity_curve.png")
     
     return portfolio_returns, cumulative_return, sharpe_ratio, all_predictions
 

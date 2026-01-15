@@ -4,6 +4,18 @@ import seaborn as sns
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler
 from ml_utils import PurgedKFold
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('pipeline.log')
+    ]
+)
+logger = logging.getLogger(__name__)
 
 def analyze_feature_importance(dummy_data):
     """
@@ -23,8 +35,8 @@ def analyze_feature_importance(dummy_data):
     # We strictly align X and y after dropping NaNs
     clean_data = dummy_data.dropna()
 
-    print(f"Original shape: {dummy_data.shape}")
-    print(f"Clean shape: {clean_data.shape}")
+    logger.info(f"Original shape: {dummy_data.shape}")
+    logger.info(f"Clean shape: {clean_data.shape}")
 
     X = clean_data.drop(columns=['target_1m', 'target_2m', 'target_3m', 'target_6m', 'target_12m'])
     y = clean_data['target_1m']
@@ -35,7 +47,7 @@ def analyze_feature_importance(dummy_data):
     feature_names = X.columns
     coefs = []
 
-    print("Training to extract feature importance...")
+    logger.info("Training to extract feature importance...")
 
     # --- 2. TRAINING LOOP ---
     for train_idx, test_idx in cv.split(clean_data):
@@ -82,11 +94,11 @@ def analyze_feature_importance(dummy_data):
     plt.savefig('feature_importance.png')
     plt.show()
 
-    print("\nTop 5 Positive Predictors (Buy Signals):")
-    print(importance.head(5)[['mean_coef', 'signal_strength']])
+    logger.info("\nTop 5 Positive Predictors (Buy Signals):")
+    logger.info(importance.head(5)[['mean_coef', 'signal_strength']])
 
-    print("\nTop 5 Negative Predictors (Sell Signals):")
-    print(importance.tail(5)[['mean_coef', 'signal_strength']])
+    logger.info("\nTop 5 Negative Predictors (Sell Signals):")
+    logger.info(importance.tail(5)[['mean_coef', 'signal_strength']])
     
     return importance
 

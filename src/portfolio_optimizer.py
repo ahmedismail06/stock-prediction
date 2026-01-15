@@ -2,9 +2,21 @@ import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('pipeline.log')
+    ]
+)
+logger = logging.getLogger(__name__)
 
 def generate_portfolio_signals(dummy_data):
-    print("--- PORTFOLIO OPTIMIZER ENGINE (LIVE PRODUCTION) ---")
+    logger.info("--- PORTFOLIO OPTIMIZER ENGINE (LIVE PRODUCTION) ---")
 
     # 1. SEPARATE TRAIN vs PREDICT
     # Train: Rows where we have a target (History)
@@ -15,8 +27,8 @@ def generate_portfolio_signals(dummy_data):
     last_date = dummy_data.index.get_level_values('date').max()
     live_data = dummy_data.xs(last_date, level='date')
 
-    print(f"Training on {len(train_data)} historical months...")
-    print(f"Generating signals for LIVE DATE: {last_date.date()}")
+    logger.info(f"Training on {len(train_data)} historical months...")
+    logger.info(f"Generating signals for LIVE DATE: {last_date.date()}")
 
     # 2. PREPARE FEATURES
     drop_cols = ['target_1m', 'target_2m', 'target_3m', 'target_6m', 'target_12m']
@@ -54,14 +66,14 @@ def generate_portfolio_signals(dummy_data):
     # We add a 'Rank' column (1 = Best, 30 = Worst)
     signals['rank'] = range(1, len(signals) + 1)
 
-    print("\n" + "="*50)
-    print("  LIVE TRADING SIGNALS")
-    print("="*50)
-    print("\n--- TOP 5 BUYS (LONG) ---")
-    print(signals.head(5))
+    logger.info("\n" + "="*50)
+    logger.info("  LIVE TRADING SIGNALS")
+    logger.info("="*50)
+    logger.info("\n--- TOP 5 BUYS (LONG) ---")
+    logger.info(signals.head(5))
 
-    print("\n--- TOP 5 SELLS (SHORT) ---")
-    print(signals.tail(5))
+    logger.info("\n--- TOP 5 SELLS (SHORT) ---")
+    logger.info(signals.tail(5))
     
     return signals
 

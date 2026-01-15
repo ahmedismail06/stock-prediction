@@ -5,6 +5,18 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from scipy.stats import spearmanr
 from ml_utils import PurgedKFold
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('pipeline.log')
+    ]
+)
+logger = logging.getLogger(__name__)
 
 def train_ridge_baseline(dummy_data):
     """
@@ -31,7 +43,7 @@ def train_ridge_baseline(dummy_data):
     predictions = []
 
     # --- 2. TRAINING LOOP ---
-    print(f"Training Ridge Regression on {X.shape[1]} features...")
+    logger.info(f"Training Ridge Regression on {X.shape[1]} features...")
 
     for fold, (train_idx, test_idx) in enumerate(cv.split(dummy_data), 1):
         
@@ -72,7 +84,7 @@ def train_ridge_baseline(dummy_data):
         ic, p_val = spearmanr(y_test, y_pred)
         ic_scores.append(ic)
         
-        print(f"Fold {fold} IC: {ic:.4f}")
+        logger.info(f"Fold {fold} IC: {ic:.4f}")
         
         # Save predictions for later analysis
         fold_preds = pd.DataFrame({'actual': y_test, 'predicted': y_pred}, index=y_test.index)
@@ -80,8 +92,8 @@ def train_ridge_baseline(dummy_data):
 
     # --- 3. SUMMARY ---
     mean_ic = np.mean(ic_scores)
-    print(f"\nAverage IC: {mean_ic:.4f}")
-    print(f"Standard Deviation of IC: {np.std(ic_scores):.4f}")
+    logger.info(f"\nAverage IC: {mean_ic:.4f}")
+    logger.info(f"Standard Deviation of IC: {np.std(ic_scores):.4f}")
 
     # Join all predictions back together
     all_predictions = pd.concat(predictions).sort_index()

@@ -1,6 +1,18 @@
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('pipeline.log')
+    ]
+)
+logger = logging.getLogger(__name__)
 
 class PurgedKFold(KFold):
     """

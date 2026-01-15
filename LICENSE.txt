@@ -1,0 +1,24 @@
+MIT License Agreement for Code and Public Data
+-----------------------------------------------
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated data files (the "Software" and "Data"), to deal in the Software and Data without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software and Data, and to permit persons to whom the Software and Data are furnished to do so, subject to the following conditions:
+
+1. Public Data Disclaimer
+
+The Software may be bundled with public data obtained from publicly available sources, including but not limited to the following:
+
+County Health Rankings: https://www.countyhealthrankings.org
+FRED (Federal Reserve Economic Data): https://fred.stlouisfed.org
+National Bureau of Economic Research (NBER): https://www.nber.org
+CMS (Centers for Medicare & Medicaid Services) Open Data: https://data.cms.gov
+These data are subject to their respective licenses or terms of use as provided by the original sources. This License does not grant any rights to these data beyond those granted by the original data providers.
+
+2. No Warranty for Data Accuracy
+
+The authors of this Software make no warranties as to the accuracy, completeness, or reliability of the Data. Users are responsible for verifying the suitability of the Data for their own purposes.
+
+3. General MIT License Terms
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software and Data.
+
+THE SOFTWARE AND DATA ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR DATA OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

@@ -85,3 +85,66 @@ def apply_cross_validation(data, target_col='target_1m'):
         print(f"\nFold {fold}:")
         print(f"  Train: {train_dates.min().date()} to {train_dates.max().date()} ({len(train_ix)} samples)")
         print(f"  Test:  {test_dates.min().date()} to {test_dates.max().date()} ({len(test_ix)} samples)")
+
+
+# Stress testing by injecting Gaussian noise
+def stress_test_model(model, X, y, noise_levels=[0.1, 0.5, 1.0, 2.0]):
+    """
+    Evaluates model performance under increasing levels of noise.
+    
+    Parameters:
+    -----------
+    model : trained sklearn model
+    X : features (pd.DataFrame)
+    y : targets (pd.Series)
+    noise_levels : list of floats (standard deviations of noise)
+    
+    Returns:
+    --------
+    pd.DataFrame : Results of stress test
+    """
+    import numpy as np
+    import pandas as pd
+    from sklearn.metrics import r2_score
+
+    results = []
+    
+    # Base performance (No Noise)
+    base_pred = model.predict(X)
+    # We use correlation (IC) because that's your main metric
+    base_ic = np.corrcoef(y, base_pred)[0, 1]
+    
+    results.append({
+        'noise_level': 0.0,
+        'ic': base_ic,
+        'ic_change_pct': 0.0
+    })
+    
+    print(f"Base IC (No Noise): {base_ic:.4f}")
+
+    for noise in noise_levels:
+        # Create random noise with the same shape as X
+        # scale=noise determines how strong the noise is
+        noise_matrix = np.random.normal(loc=0.0, scale=noise, size=X.shape)
+        
+        # Add noise to features
+        X_stressed = X + noise_matrix
+        
+        # Predict
+        pred_stressed = model.predict(X_stressed)
+        
+        # Measure Performance
+        stressed_ic = np.corrcoef(y, pred_stressed)[0, 1]
+        
+        # Calculate how much performance dropped
+        drop = (stressed_ic - base_ic) / base_ic
+        
+        print(f"Noise {noise}: IC = {stressed_ic:.4f} (Drop: {drop:.1%})")
+        
+        results.append({
+            'noise_level': noise,
+            'ic': stressed_ic,
+            'ic_change_pct': drop
+        })
+        
+    return pd.DataFrame(results)

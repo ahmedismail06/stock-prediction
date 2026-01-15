@@ -78,7 +78,16 @@ def main():
         clean_data = data.dropna(subset=['target_1m'])
         backtest_random_forest(clean_data)
 
-    
+    # Step 6: Stress Test (Robustness)
+    if args.step in ['all', 'stress']:
+        logger.info(">>> Running Robustness Stress Test...")
+        # We assume you saved the script I gave you earlier as src/stress_test.py
+        try:
+            from stress_test import run_stress_test
+            run_stress_test(data)
+        except ImportError:
+            logger.error("Could not find 'stress_test.py'. Make sure you created the file!")
+
     logger.info("--- PIPELINE COMPLETE ---")
 
 if __name__ == "__main__":

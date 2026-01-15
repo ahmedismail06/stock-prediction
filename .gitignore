@@ -41,7 +41,7 @@ env/
 *.feather
 
 # Charts/outputs
-*.png
+# *.png
 *.jpg
 *.jpeg
 

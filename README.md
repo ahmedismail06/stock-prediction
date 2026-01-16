@@ -16,13 +16,13 @@ A quantitative trading strategy using machine learning and technical analysis to
 
 ```
 src/
-├── data_features.py           # Feature engineering and data pipeline
-├── ridge_baseline.py          # Ridge regression baseline model
-├── feature_importance.py      # Feature importance analysis
-├── random_forest_backtest.py  # Random Forest backtesting engine
-├── portfolio_optimizer.py     # Portfolio signal generation
-├── ml_utils.py               # Cross-validation utilities (PurgedKFold)
-└── main.py                   # Pipeline orchestration
+├── data_features.py           # Feature engineering pipeline & caching
+├── main.py                    # CLI entry point & orchestration
+├── ml_utils.py                # PurgedKFold CV & noise injection logic
+├── portfolio_optimizer.py     # Live signal generation engine
+├── random_forest_backtest.py  # Backtesting engine
+├── ridge_baseline.py          # Linear baseline model
+└── stress_test.py             # Robustness analysis script
 ```
 
 ## Installation
@@ -45,6 +45,24 @@ This executes in sequence:
 3. Feature importance analysis
 4. Portfolio signal generation
 5. Random Forest backtest with performance metrics
+
+Run Specific Module:
+```bash
+# 1. Download data and engineer features (cached automatically)
+python src/main.py --step features
+
+# 2. Train Ridge Baseline (linear benchmark)
+python src/main.py --step ridge
+
+# 3. Generate live portfolio signals (current day)
+python src/main.py --step portfolio
+
+# 4. Run historical backtest
+python src/main.py --step backtest
+
+# 5. Run robustness stress test
+python src/main.py --step stress
+```
 
 ## Technical Stack
 
@@ -83,6 +101,21 @@ This executes in sequence:
 - Embargo windows protect against data leakage
 - Normalized indicators for multi-scale compatibility
 - Defragmented DataFrame operations for efficiency
+
+## 📊 Results & Analysis
+
+### 1. Strategy Performance
+The model implements a Long/Short portfolio strategy (Long Top 5 / Short Bottom 5).
+![Equity Curve](rf_equity_curve.png)
+
+### 2. Model Robustness (Stress Test)
+Financial data is noisy. To ensure the model learned structural signals rather than noise, I subjected it to a **Gaussian Noise Stress Test**.
+- **Result:** The model retains >50% of its predictive power even when noise levels equal the standard deviation of the features ($\sigma=1.0$), proving the signal is robust.
+![Robustness Test](stress_test_results.png)
+
+### 3. Feature Importance
+Analysis of the most predictive features driving the model's decisions.
+![Feature Importance](feature_importance.png)
 
 ## Future Enhancements
 
